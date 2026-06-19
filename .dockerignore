@@ -1,0 +1,10 @@
+.git
+.agents
+.codex
+build
+install
+log
+devel
+logs
+*.pyc
+__pycache__

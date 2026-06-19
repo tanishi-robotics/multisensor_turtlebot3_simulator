@@ -1,0 +1,28 @@
+services:
+  sim:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: turtlebot3-sim:humble
+    container_name: turtlebot3-sim-humble
+    network_mode: host
+    ipc: host
+    stdin_open: true
+    tty: true
+    environment:
+      DISPLAY: ${DISPLAY}
+      QT_X11_NO_MITSHM: "1"
+      LIBGL_ALWAYS_SOFTWARE: "1"
+      MESA_LOADER_DRIVER_OVERRIDE: llvmpipe
+      QT_XCB_GL_INTEGRATION: none
+      RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
+      CYCLONEDDS_URI: file:///etc/cyclonedds/cyclonedds.xml
+      ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-0}
+      TURTLEBOT3_MODEL: ${TURTLEBOT3_MODEL:-burger}
+      GAZEBO_MODEL_PATH: /opt/ros/humble/share/turtlebot3_gazebo/models:/usr/share/gazebo-11/models
+      GAZEBO_MODEL_DATABASE_URI: ""
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - ./src:/ros2_ws/src:rw
+      - ./docker/cyclonedds.xml:/etc/cyclonedds/cyclonedds.xml:ro
+    command: ros2 launch turtlebot3_gazebo turtlebot3_world.launch.py
