@@ -3,25 +3,26 @@ set -euo pipefail
 
 usage() {
   cat <<'USAGE'
-Usage: ./scripts/run-gazebo.sh [--cpu|--gpu]
+Usage: ./scripts/run-gazebo.sh [--gui|--headless]
 
 Options:
-  --cpu    Use CPU-only software rendering. This is the default.
-  --gpu    Use the NVIDIA GPU Docker Compose override.
+  --gui    Start Gazebo with gzclient. This is the default.
+  --headless
+           Start only gzserver without the Gazebo GUI client.
   -h, --help
            Show this help.
 USAGE
 }
 
-use_gpu=0
+use_gui=true
 
 while (($#)); do
   case "$1" in
-    --cpu)
-      use_gpu=0
+    --gui)
+      use_gui=true
       ;;
-    --gpu)
-      use_gpu=1
+    --headless)
+      use_gui=false
       ;;
     -h|--help)
       usage
@@ -43,42 +44,23 @@ if command -v xhost >/dev/null 2>&1; then
 fi
 
 container_name=turtlebot3-sim-humble
-compose_files=(-f docker/docker-compose.yml)
-mode_name=CPU
+gui_name=GUI
 
-if ((use_gpu)); then
-  compose_files+=(-f docker/docker-compose.gpu.yml)
-  mode_name=GPU
+if [ "$use_gui" = false ]; then
+  gui_name=headless
 fi
 
 container_is_running() {
   docker ps --format '{{.Names}}' | grep -qx "$container_name"
 }
 
-container_is_gpu() {
-  docker inspect -f '{{range .Config.Env}}{{println .}}{{end}}' "$container_name" 2>/dev/null \
-    | grep -qx 'NVIDIA_VISIBLE_DEVICES=all'
-}
-
-if container_is_running; then
-  if ((use_gpu)) && ! container_is_gpu; then
-    echo "Container '$container_name' is already running in CPU mode." >&2
-    echo "Stop it first with: docker stop $container_name" >&2
-    exit 1
-  fi
-
-  if ((! use_gpu)) && container_is_gpu; then
-    echo "Container '$container_name' is already running in GPU mode." >&2
-    echo "Stop it first with: docker stop $container_name" >&2
-    exit 1
-  fi
-else
+if ! container_is_running; then
   docker rm -f "$container_name" >/dev/null 2>&1 || true
-  docker compose "${compose_files[@]}" \
+  docker compose -f docker/docker-compose.yml \
     run -d --name "$container_name" sim sleep infinity
 fi
 
-echo "Starting Gazebo in $mode_name mode. Press Ctrl-C to stop Gazebo; the Docker container will keep running."
+echo "Starting Gazebo in $gui_name mode. Press Ctrl-C to stop Gazebo; the Docker container will keep running."
 
 docker exec -ti "$container_name" bash -lc \
-  'source /opt/ros/humble/setup.bash && source /ros2_ws/install/setup.bash && ros2 launch turtlebot3_stereo_sim turtlebot3_stereo_world.launch.py'
+  "source /opt/ros/humble/setup.bash && source /ros2_ws/install/setup.bash && ros2 launch turtlebot3_stereo_sim turtlebot3_stereo_world.launch.py gui:=$use_gui"

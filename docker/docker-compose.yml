@@ -5,6 +5,7 @@ services:
       dockerfile: docker/Dockerfile
     image: turtlebot3-sim:humble
     container_name: turtlebot3-sim-humble
+    gpus: all
     network_mode: host
     ipc: host
     stdin_open: true
@@ -12,9 +13,10 @@ services:
     environment:
       DISPLAY: ${DISPLAY}
       QT_X11_NO_MITSHM: "1"
-      LIBGL_ALWAYS_SOFTWARE: "1"
-      MESA_LOADER_DRIVER_OVERRIDE: llvmpipe
-      QT_XCB_GL_INTEGRATION: none
+      LIBGL_ALWAYS_SOFTWARE: "0"
+      QT_XCB_GL_INTEGRATION: xcb_glx
+      NVIDIA_VISIBLE_DEVICES: all
+      NVIDIA_DRIVER_CAPABILITIES: graphics,compute,utility,display
       RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
       CYCLONEDDS_URI: file:///etc/cyclonedds/cyclonedds.xml
       ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:?ROS_DOMAIN_ID must be set on the host}

@@ -3,4 +3,4 @@ Docker Compose v2
 tmux
 Linux desktop environment with X11
 ROS_DOMAIN_ID host environment variable
-NVIDIA Container Toolkit, optional for NVIDIA GPU rendering
+NVIDIA Container Toolkit

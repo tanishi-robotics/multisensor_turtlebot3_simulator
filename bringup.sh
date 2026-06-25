@@ -1,19 +1,19 @@
 #!/bin/bash
 
 usage() {
-    echo "Usage: $(basename "$0") [--cpu|--gpu] [SESSION_NAME]"
+    echo "Usage: $(basename "$0") [--gui|--headless] [SESSION_NAME]"
     echo
-    echo "  --cpu          Use CPU-only software rendering. This is the default."
-    echo "  --gpu          Use the NVIDIA GPU Docker Compose override."
+    echo "  --gui          Start Gazebo with gzclient and RViz. This is the default."
+    echo "  --headless     Start Gazebo without gzclient and do not auto-start RViz."
     echo "  SESSION_NAME   Optional. Name of the tmux session to create or attach."
     echo "                 If omitted, the default name 'tb3_simulator' will be used."
     echo
     echo "Examples:"
-    echo "  $(basename "$0") --gpu mysession  # Create or attach to 'mysession' using GPU rendering"
-    echo "  $(basename "$0") --cpu            # Create or attach to 'tb3_simulator' using CPU rendering"
+    echo "  $(basename "$0")                  # Create or attach to 'tb3_simulator'"
+    echo "  $(basename "$0") --headless test  # Start Gazebo without gzclient or RViz"
 }
 
-use_gpu=0
+use_gui=true
 session=tb3_simulator
 session_set=0
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -21,11 +21,11 @@ script_dir_quoted="$(printf '%q' "$script_dir")"
 
 while (($#)); do
   case "$1" in
-    --cpu)
-      use_gpu=0
+    --gui)
+      use_gui=true
       ;;
-    --gpu)
-      use_gpu=1
+    --headless)
+      use_gui=false
       ;;
     -h|--help)
       usage
@@ -79,12 +79,10 @@ apply_sysctl net.core.rmem_max 2147483647
 apply_sysctl net.ipv4.ipfrag_time 3
 apply_sysctl net.ipv4.ipfrag_high_thresh 134217728
 
-compose_files="-f docker/docker-compose.yml"
-render_mode="CPU"
+gui_mode="GUI"
 
-if [ "$use_gpu" -eq 1 ]; then
-  compose_files="$compose_files -f docker/docker-compose.gpu.yml"
-  render_mode="GPU"
+if [ "$use_gui" = false ]; then
+  gui_mode="headless"
 fi
 
 if tmux has-session -t "$session" 2>/dev/null; then
@@ -102,15 +100,19 @@ tmux new-session -d -s "$session" -n main \
 tmux send-keys -t "$session:0.0" "cd $script_dir_quoted" C-m
 tmux send-keys -t "$session:0.0" '# Docker起動コマンド' C-m
 tmux send-keys -t "$session:0.0" 'docker rm -f turtlebot3-sim-humble >/dev/null 2>&1 || true' C-m
-tmux send-keys -t "$session:0.0" "docker compose $compose_files run -d --name turtlebot3-sim-humble sim sleep infinity" C-m
-tmux send-keys -t "$session:0.0" "# Gazebo（$render_mode）起動コマンド" C-m
-tmux send-keys -t "$session:0.0" 'docker exec -ti turtlebot3-sim-humble bash -lc "source /opt/ros/humble/setup.bash && source /ros2_ws/install/setup.bash && ros2 launch turtlebot3_stereo_sim turtlebot3_stereo_world.launch.py"' C-m
+tmux send-keys -t "$session:0.0" "docker compose -f docker/docker-compose.yml run -d --name turtlebot3-sim-humble sim sleep infinity" C-m
+tmux send-keys -t "$session:0.0" "# Gazebo（$gui_mode）起動コマンド" C-m
+tmux send-keys -t "$session:0.0" "docker exec -ti turtlebot3-sim-humble bash -lc \"source /opt/ros/humble/setup.bash && source /ros2_ws/install/setup.bash && ros2 launch turtlebot3_stereo_sim turtlebot3_stereo_world.launch.py gui:=$use_gui\"" C-m
 
-tmux send-keys -t "$session:0.1" 'sleep 3' C-m
-tmux send-keys -t "$session:0.1" 'docker exec -ti turtlebot3-sim-humble bash' C-m
-tmux send-keys -t "$session:0.1" 'source /opt/ros/humble/setup.bash' C-m
-tmux send-keys -t "$session:0.1" 'source install/setup.bash' C-m
-tmux send-keys -t "$session:0.1" 'ros2 launch turtlebot3_stereo_sim turtlebot3_stereo_rviz.launch.py' C-m
+if [ "$use_gui" = true ]; then
+  tmux send-keys -t "$session:0.1" 'sleep 3' C-m
+  tmux send-keys -t "$session:0.1" 'docker exec -ti turtlebot3-sim-humble bash' C-m
+  tmux send-keys -t "$session:0.1" 'source /opt/ros/humble/setup.bash' C-m
+  tmux send-keys -t "$session:0.1" 'source install/setup.bash' C-m
+  tmux send-keys -t "$session:0.1" 'ros2 launch turtlebot3_stereo_sim turtlebot3_stereo_rviz.launch.py' C-m
+else
+  tmux send-keys -t "$session:0.1" '# Headless mode: RViz is not auto-started.' C-m
+fi
 
 tmux send-keys -t "$session:0.2" 'sleep 3' C-m
 tmux send-keys -t "$session:0.2" 'docker exec -ti turtlebot3-sim-humble bash' C-m

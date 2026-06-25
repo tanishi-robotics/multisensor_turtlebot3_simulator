@@ -2,7 +2,8 @@ import os
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import IncludeLaunchDescription
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
+from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
@@ -19,6 +20,7 @@ def generate_launch_description():
     turtlebot3_model = os.environ.get('TURTLEBOT3_MODEL', 'waffle')
 
     use_sim_time = LaunchConfiguration('use_sim_time', default='true')
+    gui = LaunchConfiguration('gui', default='true')
     x_pose = LaunchConfiguration('x_pose', default='-3.5')
     y_pose = LaunchConfiguration('y_pose', default='-4.5')
     yaw_pose = LaunchConfiguration('yaw_pose', default='1.58')
@@ -55,7 +57,8 @@ def generate_launch_description():
     gzclient_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(pkg_gazebo_ros, 'launch', 'gzclient.launch.py')
-        )
+        ),
+        condition=IfCondition(gui),
     )
 
     robot_state_publisher_cmd = Node(
@@ -97,6 +100,11 @@ def generate_launch_description():
     )
 
     ld = LaunchDescription()
+    ld.add_action(DeclareLaunchArgument(
+        'gui',
+        default_value='true',
+        description='Start Gazebo GUI client when true.',
+    ))
     ld.add_action(gzserver_cmd)
     ld.add_action(gzclient_cmd)
     ld.add_action(robot_state_publisher_cmd)
