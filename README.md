@@ -36,6 +36,18 @@ export ROS_DOMAIN_ID=30
 
 The Docker container uses the exact `ROS_DOMAIN_ID` value provided by the host environment. The run scripts stop with an error if it is not set. The bringup flow keeps the Docker container alive after Gazebo is stopped with Ctrl-C. Stop the container explicitly with `docker stop turtlebot3-sim-humble` when it is no longer needed.
 
+## Convenience Scripts
+
+Use `bringup.sh` for normal startup. The scripts below are helper commands for launching Gazebo or RViz separately.
+
+```bash
+export ROS_DOMAIN_ID=30
+./scripts/run-gazebo.sh --cpu
+./scripts/run-rviz.sh --cpu
+```
+
+Use `--gpu` instead of `--cpu` when launching with NVIDIA GPU rendering.
+
 ## Published Interfaces
 
 Expected ROS 2 topics published by the simulation:
@@ -153,6 +165,18 @@ export ROS_DOMAIN_ID=30
 
 Docker container 内の `ROS_DOMAIN_ID` は、host 環境変数の値に固定されます。未設定の場合、起動スクリプトはエラーで停止します。
 bringup 経由では Gazebo を Ctrl-C で停止しても Docker container は起動したまま残ります。不要になったら `docker stop turtlebot3-sim-humble` で明示的に停止してください。
+
+## 便利スクリプト
+
+通常の起動には `bringup.sh` を使ってください。以下の scripts は Gazebo または RViz を個別に起動したい場合の補助コマンドです。
+
+```bash
+export ROS_DOMAIN_ID=30
+./scripts/run-gazebo.sh --cpu
+./scripts/run-rviz.sh --cpu
+```
+
+NVIDIA GPU rendering で起動する場合は `--cpu` の代わりに `--gpu` を指定してください。
 
 ## 公開インターフェース
 
