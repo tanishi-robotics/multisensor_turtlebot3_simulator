@@ -20,6 +20,7 @@ services:
       RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
       CYCLONEDDS_URI: file:///etc/cyclonedds/cyclonedds.xml
       ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:?ROS_DOMAIN_ID must be set on the host}
+      ROS_LOCALHOST_ONLY: "0"
       TURTLEBOT3_MODEL: waffle
       SMALL_HOUSE_WORLD_PATH: /opt/aws-robomaker-small-house-world
       GAZEBO_MODEL_PATH: /opt/aws-robomaker-small-house-world/models:/opt/ros/humble/share/turtlebot3_gazebo/models:/usr/share/gazebo-11/models

@@ -58,6 +58,8 @@ if [ "$SUDO_USER" ]; then
     exit 1
 fi
 
+xhost +local:docker
+
 # CycloneDDS向けのネットワークチューニングを可能な範囲で適用する。
 # 権限がない環境では警告だけ出して、Docker/Gazeboの起動は継続する。
 apply_sysctl() {

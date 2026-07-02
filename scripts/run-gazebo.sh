@@ -39,9 +39,7 @@ done
 
 : "${ROS_DOMAIN_ID:?ROS_DOMAIN_ID must be set on the host before starting Docker}"
 
-if command -v xhost >/dev/null 2>&1; then
-  xhost +local:docker >/dev/null
-fi
+xhost +local:docker
 
 container_name=turtlebot3-sim-humble
 gui_name=GUI
